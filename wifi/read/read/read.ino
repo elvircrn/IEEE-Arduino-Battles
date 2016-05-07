@@ -14,6 +14,45 @@
 #define PWD  12
 #define _DATA unsigned long
 
+#ifndef ADI
+
+int a=5;
+int a1=6;
+int a2=9;
+int a3=10;
+ 
+void setupAdi() {
+  pinMode (a, OUTPUT);
+  pinMode (a1, OUTPUT);
+  pinMode (a2, OUTPUT);
+  pinMode (a3, OUTPUT);
+}
+ 
+void move(int smjer)
+{
+  switch(smjer)
+  {
+    case 1:   //naprijed
+      digitalWrite(a, HIGH);
+      digitalWrite(a2, HIGH);
+      break;
+    case 2:   //nazad
+      digitalWrite(a1, HIGH);
+      digitalWrite(a3, HIGH);
+      break;
+    case 3:   //lijevo
+     digitalWrite(a, HIGH);
+     digitalWrite(a3, HIGH);
+     break;
+    case 4:   //desno
+      digitalWrite(a1, HIGH);
+      digitalWrite(a2, HIGH);
+      break;
+  }
+}
+
+#endif
+
 class Coder
 {
 public:
@@ -94,6 +133,47 @@ void setup()
 {
   serialSetup();
   radioSetup();
+  setupAdi();
+}
+
+const unsigned long DEAD_ZONE = 5;
+
+bool process(int x, int y)
+{
+  x -= 512;
+  y -= 512;
+
+  unsigned long X = x;
+  unsigned long Y = y;
+
+  if (X * X + Y * Y > DEAD_ZONE * DEAD_ZONE) {
+    if (y > x && y > - x)
+    {
+      move(1);
+      Serial.println("MOVING\n");
+      return true;
+    }
+    if (y < x && y > - x)
+    {
+      move(2);
+      Serial.println("MOVING\n");
+      return true;
+    }
+    if (y > x && y < - x)
+    {
+      move(3);
+      Serial.println("MOVING\n");
+      return true;
+    }
+    if (y < x && y < - x)
+    {
+      move(4);
+      Serial.println("MOVING\n");
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void receive(void *niz,int vel)
@@ -118,17 +198,33 @@ void receive(void *niz,int vel)
   }
   else
   {
+      int x, y;
       unsigned long data;                                 // Grab the response, compare, and send to debugging spew
       radio.read( &data, sizeof(data) );
       Serial.print(coder.getX(data)); 
       Serial.print(" "); 
       Serial.print(coder.getY(data)); 
+      Serial.print("data: "); Serial.print(data);
       Serial.println("");
+  
+      x = coder.getX(data);
+      y = coder.getY(data);
+      bool res = process(x, y);
+
+      if (!res)
+      {
+        digitalWrite(a, LOW);
+        digitalWrite(a1, LOW);
+        digitalWrite(a2, LOW);
+        digitalWrite(a3, LOW);
+      }
   }
-  delay(250);
 }
+
 int u;
-void loop() {
+
+void loop()
+{
  
     receive(&u,sizeof(u));
  

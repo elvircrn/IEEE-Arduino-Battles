@@ -94,39 +94,25 @@ void setup() {
   radio.startListening();
  // Serial.println(F("*** Krenulo je dalje"));
 }
- 
-void Salji(void *niz,int vel)
-{
-     
-  radio.stopListening();                                    // First, stop listening so we can talk.
- 
-  Serial.println(F("Now sending"));
-  int prim=95;
-  for (int prim = 0; prim <= 100; prim++)
-  {
-    if (!radio.write( &prim, sizeof(prim)))
-    {
-      Serial.println(F("failed"));
-    }
-    delay(250);
-}
-                                    // Now, continue listening
- 
-  // Try again 1s later
- 
-}
-int u=45;
-void loop() {
- 
-/****************** Ping Out Role ***************************/  
- // if(Serial.available())
 
+void loop() {
+  
   int x = (int)analogRead(A0);
   int y = (int)analogRead(A1);
 
   unsigned long data = coder.encode(x, y, 0);
 
   //Serial.print("Data: "); Serial.print(coder.getX(data)); Serial.print(" "); Serial.print(coder.getY(data)); Serial.println("");
+  radio.stopListening();                                    // First, stop listening so we can talk.
  
-  Salji(&data, sizeof(data));
-} // Loop
+  
+    if (!radio.write( &data, sizeof(data)))
+    {
+      Serial.println(F("failed"));
+    }
+
+
+}
+
+
+
