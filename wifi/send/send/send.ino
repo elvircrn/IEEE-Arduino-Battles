@@ -10,6 +10,52 @@
 */
  
 #include <SPI.h>
+
+#define PWD  12
+#define _DATA unsigned long
+
+class Coder
+{
+public:
+  int transformX(int rawX)
+  {
+    return rawX;
+  }
+
+  int transformY(int rawY)
+  {
+    return rawY;
+  }
+
+  unsigned long encode(int rawX, int rawY, bool pressed)
+  {
+    int x = transformX(rawX);
+    int y = transformX(rawY);
+  
+    unsigned long ret = PWD;
+    ret <<= 1;
+    ret += pressed;
+    ret <<= 10;
+    ret += y;
+    ret <<= 10;
+    ret += x;
+    return ret;
+  }
+
+  int getX(unsigned long data)
+  {
+    unsigned long BITS = (1<<10) - 1;
+    return data & BITS;
+  }
+
+  int getY(unsigned long data)
+  {
+    unsigned long BITS = (1<<10) - 1;
+    data >>= 10;
+    return data & (BITS);  
+  }
+};
+
  
 /****************** User Config ***************************/
 /***      Set this radio as radio number 0 or 1         ***/
@@ -17,6 +63,7 @@ bool radioNumber = 0;
  
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
 RF24 radio(7,8);
+Coder coder;
 /**********************************************************/
  
 const int kanal = 30;
@@ -73,6 +120,13 @@ void loop() {
  
 /****************** Ping Out Role ***************************/  
  // if(Serial.available())
-    Salji(&u, sizeof(u));
+
+  int x = (int)analogRead(A0);
+  int y = (int)analogRead(A1);
+
+  unsigned long data = coder.encode(x, y, 0);
+
+  //Serial.print("Data: "); Serial.print(coder.getX(data)); Serial.print(" "); Serial.print(coder.getY(data)); Serial.println("");
  
+  Salji(&data, sizeof(data));
 } // Loop
